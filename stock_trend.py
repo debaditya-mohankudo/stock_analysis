@@ -15,6 +15,7 @@ OBV Trend:
 """
 import yfinance as yf
 import pandas as pd
+import numpy as np
 
 def calculate_indicators(stock_data: pd.DataFrame) -> pd.DataFrame:
     # Simple Moving Average (SMA)
@@ -52,10 +53,10 @@ def calculate_indicators(stock_data: pd.DataFrame) -> pd.DataFrame:
 
     # On-Balance Volume (OBV)
     stock_data['Daily_Change'] = stock_data['Close'].diff()
-    stock_data['Volume_Change'] = stock_data.apply(lambda row: row['Volume'] if row['Daily_Change'] > 0 else -row['Volume'] if row['Daily_Change'] < 0 else 0, axis=1)
+    stock_data['Volume_Change'] = stock_data['Volume'] * np.sign(stock_data['Daily_Change'])
     stock_data['OBV'] = stock_data['Volume_Change'].cumsum()
 
-    print(stock_data.head)
+    print(stock_data.count)
     return stock_data
 
 def determine_trend(stock_data: pd.DataFrame): 
@@ -63,41 +64,31 @@ def determine_trend(stock_data: pd.DataFrame):
     uptrend_count = 0
     downtrend_count = 0
 
+    # Helper function to increment trend counters
+    def update_trend_count(condition):
+        nonlocal uptrend_count, downtrend_count
+        if condition:
+            uptrend_count += 1
+        else:
+            downtrend_count += 1
+
     # SMA Trend
-    if stock_data['SMA_20'].iloc[-1] > stock_data['SMA_50'].iloc[-1]:
-        uptrend_count += 1
-    else:
-        downtrend_count += 1
+    update_trend_count(stock_data['SMA_20'].iloc[-1] > stock_data['SMA_50'].iloc[-1])
 
     # EMA Trend
-    if stock_data['EMA_20'].iloc[-1] > stock_data['EMA_50'].iloc[-1]:
-        uptrend_count += 1
-    else:
-        downtrend_count += 1
+    update_trend_count(stock_data['EMA_20'].iloc[-1] > stock_data['EMA_50'].iloc[-1])
 
     # Bollinger Bands Trend
-    if stock_data['Close'].iloc[-1] > stock_data['MiddleBand'].iloc[-1]:
-        uptrend_count += 1
-    else:
-        downtrend_count += 1
+    update_trend_count(stock_data['Close'].iloc[-1] > stock_data['MiddleBand'].iloc[-1])
 
     # RSI Trend
-    if stock_data['RSI'].iloc[-1] > 50:
-        uptrend_count += 1
-    else:
-        downtrend_count += 1
+    update_trend_count(stock_data['RSI'].iloc[-1] > 50)
 
     # MACD Trend
-    if stock_data['MACD'].iloc[-1] > stock_data['Signal_Line'].iloc[-1]:
-        uptrend_count += 1
-    else:
-        downtrend_count += 1
+    update_trend_count(stock_data['MACD'].iloc[-1] > stock_data['Signal_Line'].iloc[-1])
 
     # OBV Trend
-    if stock_data['OBV'].iloc[-1] > stock_data['OBV'].iloc[-2]:
-        uptrend_count += 1
-    else:
-        downtrend_count += 1
+    update_trend_count(stock_data['OBV'].iloc[-1] > stock_data['OBV'].iloc[-2])
 
     # Determine overall trend
     if uptrend_count > downtrend_count:
@@ -110,7 +101,7 @@ def determine_trend(stock_data: pd.DataFrame):
     return overall_trend, uptrend_count, downtrend_count
 
 def get_stock_trend(stock_symbol, period, interval):
-    # Fetch historical market data for the last 30 days
+    # Fetch historical market data
     stock = yf.Ticker(stock_symbol)
     stock_data = stock.history(period=period, interval=interval)
 
@@ -136,6 +127,6 @@ def get_stock_trend(stock_symbol, period, interval):
 
 if __name__ == "__main__":
     stock_symbol = input("Enter the stock symbol (e.g., TITAGARH.NS): ")
-    PERIOD = "5d" # "1d", "1mo", "3mo", "6mo", "1y"
-    INTERVAL = "5m"
+    PERIOD = "1d" # "1d", "1mo", "3mo", "6mo", "1y"
+    INTERVAL = "1m" # "1m", "5m", "15m", "30m", "1h", "1d"
     get_stock_trend(stock_symbol, period=PERIOD, interval=INTERVAL)
