@@ -1,8 +1,22 @@
+"""
+Explanation of Trend Logic:
+SMA Trend: 
+    If the 20-day SMA is above the 50-day SMA, it indicates an uptrend; otherwise, a downtrend.
+EMA Trend: 
+    If the 20-day EMA is above the 50-day EMA, it indicates an uptrend; otherwise, a downtrend.
+Bollinger Bands Trend: 
+    If the closing price is above the middle band, it indicates an uptrend; otherwise, a downtrend.
+RSI Trend: 
+    If the RSI is above 50, it indicates an uptrend; otherwise, a downtrend.
+MACD Trend: 
+    If the MACD is above the signal line, it indicates an uptrend; otherwise, a downtrend.
+OBV Trend: 
+    If the OBV is increasing (current OBV > previous OBV), it indicates an uptrend; otherwise, a downtrend.
+"""
 import yfinance as yf
 import pandas as pd
-import numpy as np
 
-def calculate_indicators(stock_data):
+def calculate_indicators(stock_data: pd.DataFrame) -> pd.DataFrame:
     # Simple Moving Average (SMA)
     stock_data['SMA_20'] = stock_data['Close'].rolling(window=20).mean()
     stock_data['SMA_50'] = stock_data['Close'].rolling(window=50).mean()
@@ -41,9 +55,10 @@ def calculate_indicators(stock_data):
     stock_data['Volume_Change'] = stock_data.apply(lambda row: row['Volume'] if row['Daily_Change'] > 0 else -row['Volume'] if row['Daily_Change'] < 0 else 0, axis=1)
     stock_data['OBV'] = stock_data['Volume_Change'].cumsum()
 
+    print(stock_data.head)
     return stock_data
 
-def determine_trend(stock_data):
+def determine_trend(stock_data: pd.DataFrame): 
     # Initialize counters
     uptrend_count = 0
     downtrend_count = 0
@@ -94,9 +109,10 @@ def determine_trend(stock_data):
 
     return overall_trend, uptrend_count, downtrend_count
 
-def get_stock_trend(stock_symbol):
-    # Fetch historical market data for the last 3 months
-    stock_data = yf.download(stock_symbol, period="3mo", interval="1d")
+def get_stock_trend(stock_symbol, period, interval):
+    # Fetch historical market data for the last 30 days
+    stock = yf.Ticker(stock_symbol)
+    stock_data = stock.history(period=period, interval=interval)
 
     # Check if data is fetched
     if stock_data.empty:
@@ -120,16 +136,6 @@ def get_stock_trend(stock_symbol):
 
 if __name__ == "__main__":
     stock_symbol = input("Enter the stock symbol (e.g., TITAGARH.NS): ")
-    get_stock_trend(stock_symbol)
-
-
-"""
-Explanation of Trend Logic:
-SMA Trend: If the 20-day SMA is above the 50-day SMA, it indicates an uptrend; otherwise, a downtrend.
-EMA Trend: If the 20-day EMA is above the 50-day EMA, it indicates an uptrend; otherwise, a downtrend.
-Bollinger Bands Trend: If the closing price is above the middle band, it indicates an uptrend; otherwise, a downtrend.
-RSI Trend: If the RSI is above 50, it indicates an uptrend; otherwise, a downtrend.
-MACD Trend: If the MACD is above the signal line, it indicates an uptrend; otherwise, a downtrend.
-OBV Trend: If the OBV is increasing (current OBV > previous OBV), it indicates an uptrend; otherwise, a downtrend.
-
-"""
+    PERIOD = "5d" # "1d", "1mo", "3mo", "6mo", "1y"
+    INTERVAL = "5m"
+    get_stock_trend(stock_symbol, period=PERIOD, interval=INTERVAL)
