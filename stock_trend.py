@@ -13,50 +13,50 @@ MACD Trend:
 OBV Trend: 
     If the OBV is increasing (current OBV > previous OBV), it indicates an uptrend; otherwise, a downtrend.
 """
+
+# pip install pandas-ta
 import yfinance as yf
 import pandas as pd
-import numpy as np
+import pandas_ta as ta
+import yfinance as yf
+import pandas as pd
+import pandas_ta as ta
 
 def calculate_indicators(stock_data: pd.DataFrame) -> pd.DataFrame:
     # Simple Moving Average (SMA)
-    stock_data['SMA_20'] = stock_data['Close'].rolling(window=20).mean()
-    stock_data['SMA_50'] = stock_data['Close'].rolling(window=50).mean()
+    stock_data['SMA_20'] = ta.sma(stock_data['Close'], length=20)
+    stock_data['SMA_50'] = ta.sma(stock_data['Close'], length=50)
 
     # Exponential Moving Average (EMA)
-    stock_data['EMA_20'] = stock_data['Close'].ewm(span=20, adjust=False).mean()
-    stock_data['EMA_50'] = stock_data['Close'].ewm(span=50, adjust=False).mean()
+    stock_data['EMA_20'] = ta.ema(stock_data['Close'], length=20)
+    stock_data['EMA_50'] = ta.ema(stock_data['Close'], length=50)
 
     # Bollinger Bands
-    stock_data['MiddleBand'] = stock_data['Close'].rolling(window=20).mean()
-    stock_data['UpperBand'] = stock_data['MiddleBand'] + 2 * stock_data['Close'].rolling(window=20).std()
-    stock_data['LowerBand'] = stock_data['MiddleBand'] - 2 * stock_data['Close'].rolling(window=20).std()
+    bbands = ta.bbands(stock_data['Close'], length=20, std=2)
+    stock_data['MiddleBand'] = bbands['BBM_20_2.0']
+    stock_data['UpperBand'] = bbands['BBU_20_2.0']
+    stock_data['LowerBand'] = bbands['BBL_20_2.0']
 
     # Relative Strength Index (RSI)
-    delta = stock_data['Close'].diff()
-    gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
-    loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
-    RS = gain / loss
-    stock_data['RSI'] = 100 - (100 / (1 + RS))
+    stock_data['RSI'] = ta.rsi(stock_data['Close'], length=14)
 
     # MACD
-    stock_data['EMA_12'] = stock_data['Close'].ewm(span=12, adjust=False).mean()
-    stock_data['EMA_26'] = stock_data['Close'].ewm(span=26, adjust=False).mean()
-    stock_data['MACD'] = stock_data['EMA_12'] - stock_data['EMA_26']
-    stock_data['Signal_Line'] = stock_data['MACD'].ewm(span=9, adjust=False).mean()
+    macd = ta.macd(stock_data['Close'], fast=12, slow=26, signal=9)
+    stock_data['MACD'] = macd['MACD_12_26_9']
+    stock_data['Signal_Line'] = macd['MACDs_12_26_9']
 
     # Average True Range (ATR)
-    stock_data['High-Low'] = stock_data['High'] - stock_data['Low']
-    stock_data['High-PrevClose'] = abs(stock_data['High'] - stock_data['Close'].shift(1))
-    stock_data['Low-PrevClose'] = abs(stock_data['Low'] - stock_data['Close'].shift(1))
-    stock_data['TrueRange'] = stock_data[['High-Low', 'High-PrevClose', 'Low-PrevClose']].max(axis=1)
-    stock_data['ATR'] = stock_data['TrueRange'].rolling(window=14).mean()
+    stock_data['ATR'] = ta.atr(stock_data['High'], stock_data['Low'], stock_data['Close'], length=14)
 
     # On-Balance Volume (OBV)
-    stock_data['Daily_Change'] = stock_data['Close'].diff()
-    stock_data['Volume_Change'] = stock_data['Volume'] * np.sign(stock_data['Daily_Change'])
-    stock_data['OBV'] = stock_data['Volume_Change'].cumsum()
+    stock_data['OBV'] = ta.obv(stock_data['Close'], stock_data['Volume'])
 
-    print(stock_data.count)
+    # ADX, +DI, -DI
+    adx = ta.adx(stock_data['High'], stock_data['Low'], stock_data['Close'], length=14)
+    stock_data['Plus_DI'] = adx['DMP_14']
+    stock_data['Minus_DI'] = adx['DMN_14']
+    stock_data['ADX'] = adx['ADX_14']
+
     return stock_data
 
 def determine_trend(stock_data: pd.DataFrame): 
@@ -72,23 +72,29 @@ def determine_trend(stock_data: pd.DataFrame):
         else:
             downtrend_count += 1
 
+    # Get the last value without using iloc
+    last_values = stock_data.tail(1)
+
     # SMA Trend
-    update_trend_count(stock_data['SMA_20'].iloc[-1] > stock_data['SMA_50'].iloc[-1])
+    update_trend_count(last_values['SMA_20'].values[0] > last_values['SMA_50'].values[0])
 
     # EMA Trend
-    update_trend_count(stock_data['EMA_20'].iloc[-1] > stock_data['EMA_50'].iloc[-1])
+    update_trend_count(last_values['EMA_20'].values[0] > last_values['EMA_50'].values[0])
 
     # Bollinger Bands Trend
-    update_trend_count(stock_data['Close'].iloc[-1] > stock_data['MiddleBand'].iloc[-1])
+    update_trend_count(last_values['Close'].values[0] > last_values['MiddleBand'].values[0])
 
     # RSI Trend
-    update_trend_count(stock_data['RSI'].iloc[-1] > 50)
+    update_trend_count(last_values['RSI'].values[0] > 50)
 
     # MACD Trend
-    update_trend_count(stock_data['MACD'].iloc[-1] > stock_data['Signal_Line'].iloc[-1])
+    update_trend_count(last_values['MACD'].values[0] > last_values['Signal_Line'].values[0])
 
     # OBV Trend
-    update_trend_count(stock_data['OBV'].iloc[-1] > stock_data['OBV'].iloc[-2])
+    update_trend_count(last_values['OBV'].values[0] > stock_data['OBV'].iloc[-2])
+
+    # ADX Trend
+    update_trend_count(last_values['Plus_DI'].values[0] > last_values['Minus_DI'].values[0] and last_values['ADX'].values[0] > 20)
 
     # Determine overall trend
     if uptrend_count > downtrend_count:
@@ -123,10 +129,10 @@ def get_stock_trend(stock_symbol, period, interval):
     print(f"Downtrend Indicators: {downtrend_count}")
 
     # Print calculated indicators for inspection
-    print(stock_data[['Close', 'SMA_20', 'SMA_50', 'EMA_20', 'EMA_50', 'UpperBand', 'MiddleBand', 'LowerBand', 'RSI', 'MACD', 'Signal_Line', 'ATR', 'OBV']].tail(10))
+    print(stock_data[['Close', 'SMA_20', 'SMA_50', 'EMA_20', 'EMA_50', 'UpperBand', 'MiddleBand', 'LowerBand', 'RSI', 'MACD', 'Signal_Line', 'ATR', 'OBV', 'Plus_DI', 'Minus_DI', 'ADX']].tail(10))
 
 if __name__ == "__main__":
     stock_symbol = input("Enter the stock symbol (e.g., TITAGARH.NS): ")
-    PERIOD = "1d" # "1d", "1mo", "3mo", "6mo", "1y"
-    INTERVAL = "1m" # "1m", "5m", "15m", "30m", "1h", "1d"
+    PERIOD = "1mo" # "1d", "1mo", "3mo", "6mo", "1y"
+    INTERVAL = "1h" # "1m", "5m", "15m", "30m", "1h", "1d"
     get_stock_trend(stock_symbol, period=PERIOD, interval=INTERVAL)
