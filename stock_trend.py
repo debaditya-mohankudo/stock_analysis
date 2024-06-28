@@ -159,12 +159,14 @@ def determine_trend(stock_data: pd.DataFrame):
 
 
 
-def get_stock_data(stock_symbol, period, interval):
+def get_stock_data(stock_symbol, period, interval) -> pd.DataFrame:
     stock = yf.Ticker(stock_symbol)
     stock_data = stock.history(period=period, interval=interval)
     if stock_data.empty:
         print(f"No data found for {stock_symbol}.")
         return None
+    format_print(f"Fetching stock data for the period: {period}" )
+    format_print(f"Choosing interval: {interval}")
     return stock_data
 
 def calculate_pivot_points(stock_data: pd.DataFrame) -> pd.DataFrame:
@@ -182,7 +184,7 @@ def find_swing_levels(stock_data: pd.DataFrame, window: int = 5) -> pd.DataFrame
     stock_data['Swing_Low'] = stock_data['Low'].rolling(window=window, min_periods=1).min()
     return stock_data
 
-def summarize_support_resistance(stock_data: pd.DataFrame):
+def summarize_support_resistance(stock_data: pd.DataFrame) -> None:
     if stock_data is not None:
         stock_data = calculate_pivot_points(stock_data)
         stock_data = find_swing_levels(stock_data, window=5)
@@ -200,7 +202,7 @@ def summarize_support_resistance(stock_data: pd.DataFrame):
 
 
 
-def get_stock_trend(stock_data: pd.DataFrame):
+def get_stock_trend(stock_data: pd.DataFrame) -> None:
 
     # Calculate indicators
     stock_data = calculate_indicators(stock_data)
