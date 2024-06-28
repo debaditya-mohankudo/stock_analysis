@@ -1,3 +1,5 @@
+### Find Stock trend ( EXPERIMENTAL )
+
 """
 Explanation of Trend Logic:
 SMA Trend: 
@@ -110,7 +112,7 @@ def get_stock_trend(stock_symbol, period, interval):
     # Fetch historical market data
     stock = yf.Ticker(stock_symbol)
     stock_data = stock.history(period=period, interval=interval)
-    print(stock_data.tail)
+    #print(stock_data.tail)
 
     # Check if data is fetched
     if stock_data.empty:
