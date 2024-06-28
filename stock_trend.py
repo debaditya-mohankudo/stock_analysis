@@ -1,4 +1,5 @@
 ### Find Stock trend ( EXPERIMENTAL )
+### Get the stock symbol from yahoo finance site
 
 """
 Explanation of Trend Logic:
@@ -14,6 +15,25 @@ MACD Trend:
     If the MACD is above the signal line, it indicates an uptrend; otherwise, a downtrend.
 OBV Trend: 
     If the OBV is increasing (current OBV > previous OBV), it indicates an uptrend; otherwise, a downtrend.
+"""
+
+""" Explanation of support and resistance
+
+Support and Resistance Levels
+Support Level: A support level is a price level where a stock tends to stop falling because there is a lot of buying interest at that level. Think of it as a "floor" that the price typically doesn't go below.
+Resistance Level: A resistance level is a price level where a stock tends to stop rising because there is a lot of selling interest at that level. Think of it as a "ceiling" that the price typically doesn't go above.
+Pivot Points Method
+Pivot Points use the previous day's high, low, and closing prices to calculate potential support and resistance levels for the current day.
+
+Pivot Point (PP): An average of the high, low, and close prices from the previous period. It serves as a central reference point.
+Resistance 1 (R1), Resistance 2 (R2), Resistance 3 (R3): Potential resistance levels above the pivot point.
+Support 1 (S1), Support 2 (S2), Support 3 (S3): Potential support levels below the pivot point.
+Swing Highs and Lows Method
+Swing highs and lows are based on recent peaks and troughs in the stock price.
+
+Swing High: The highest price point over a specified recent period. It's a potential resistance level because it's a peak where the price previously reversed.
+Swing Low: The lowest price point over a specified recent period. It's a potential support level because it's a trough where the price previously reversed.
+
 """
 
 # pip install pandas-ta
@@ -57,6 +77,7 @@ def calculate_indicators(stock_data: pd.DataFrame) -> pd.DataFrame:
     stock_data['ADX'] = adx['ADX_14']
 
     return stock_data
+
 def format_print(text):
     print(text)
     print('_' * len(text))
@@ -108,16 +129,52 @@ def determine_trend(stock_data: pd.DataFrame):
 
     return overall_trend, uptrend_count, downtrend_count
 
-def get_stock_trend(stock_symbol, period, interval):
-    # Fetch historical market data
+
+
+def get_stock_data(stock_symbol, period, interval):
     stock = yf.Ticker(stock_symbol)
     stock_data = stock.history(period=period, interval=interval)
-    #print(stock_data.tail)
-
-    # Check if data is fetched
     if stock_data.empty:
         print(f"No data found for {stock_symbol}.")
-        return
+        return None
+    return stock_data
+
+def calculate_pivot_points(stock_data: pd.DataFrame) -> pd.DataFrame:
+    stock_data['Pivot'] = (stock_data['High'] + stock_data['Low'] + stock_data['Close']) / 3
+    stock_data['R1'] = 2 * stock_data['Pivot'] - stock_data['Low']
+    stock_data['S1'] = 2 * stock_data['Pivot'] - stock_data['High']
+    stock_data['R2'] = stock_data['Pivot'] + (stock_data['High'] - stock_data['Low'])
+    stock_data['S2'] = stock_data['Pivot'] - (stock_data['High'] - stock_data['Low'])
+    stock_data['R3'] = stock_data['High'] + 2 * (stock_data['Pivot'] - stock_data['Low'])
+    stock_data['S3'] = stock_data['Low'] - 2 * (stock_data['High'] - stock_data['Pivot'])
+    return stock_data
+
+def find_swing_levels(stock_data: pd.DataFrame, window: int = 5) -> pd.DataFrame:
+    stock_data['Swing_High'] = stock_data['High'].rolling(window=window, min_periods=1).max()
+    stock_data['Swing_Low'] = stock_data['Low'].rolling(window=window, min_periods=1).min()
+    return stock_data
+
+def summarize_support_resistance(stock_symbol, period, interval):
+    stock_data = get_stock_data(stock_symbol, period, interval)
+    if stock_data is not None:
+        stock_data = calculate_pivot_points(stock_data)
+        stock_data = find_swing_levels(stock_data, window=5)
+
+        last_row = stock_data.iloc[-1]
+        print(f"Stock Symbol: {stock_symbol}")
+        print(f"Close: {last_row['Close']}")
+        print("Pivot Points:")
+        print(f"  Pivot: {last_row['Pivot']}")
+        print(f"  Resistance Levels: R1={last_row['R1']}, R2={last_row['R2']}, R3={last_row['R3']}")
+        print(f"  Support Levels: S1={last_row['S1']}, S2={last_row['S2']}, S3={last_row['S3']}")
+        print("Swing Levels:")
+        print(f"  Swing High: {last_row['Swing_High']}")
+        print(f"  Swing Low: {last_row['Swing_Low']}")
+
+
+def get_stock_trend(stock_symbol, period, interval):
+    # Fetch historical market data
+    stock_data = get_stock_data(stock_symbol, period=period, interval=interval)
 
     # Calculate indicators
     stock_data = calculate_indicators(stock_data)
@@ -132,10 +189,17 @@ def get_stock_trend(stock_symbol, period, interval):
     print(f"Downtrend Indicators: {downtrend_count}")
 
     # Print calculated indicators for inspection
-    print(stock_data[['Close', 'SMA_20', 'SMA_50', 'EMA_20', 'EMA_50', 'UpperBand', 'MiddleBand', 'LowerBand', 'RSI', 'MACD', 'Signal_Line', 'ATR', 'OBV', 'Plus_DI', 'Minus_DI', 'ADX']].tail(10))
+    #print(stock_data[['Close', 'SMA_20', 'SMA_50', 'EMA_20', 'EMA_50']].tail(10))
+    #print(stock_data[['Close', 'UpperBand', 'MiddleBand', 'LowerBand', 'RSI', 'MACD', 'Signal_Line']].tail(10))
+    #print(stock_data[['Close', 'ATR', 'OBV', 'Plus_DI', 'Minus_DI', 'ADX']].tail(10))
+
+
 
 if __name__ == "__main__":
     stock_symbol = input("Enter the stock symbol (e.g., TITAGARH.NS): ")
-    PERIOD = "1d" # "1d", "1mo", "3mo", "6mo", "1y"
-    INTERVAL = "1m" # "1m", "5m", "15m", "30m", "1h", "1d"
+    PERIOD = "5d" # "1d", "1mo", "3mo", "6mo", "1y"
+    INTERVAL = "15m" # "1m", "5m", "15m", "30m", "1h", "1d"
     get_stock_trend(stock_symbol.upper(), period=PERIOD, interval=INTERVAL)
+    summarize_support_resistance(stock_symbol, period=PERIOD, interval=INTERVAL)
+
+
