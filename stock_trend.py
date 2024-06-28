@@ -220,7 +220,7 @@ def get_stock_trend(stock_data: pd.DataFrame):
     #print(stock_data[['Close', 'ATR', 'OBV', 'Plus_DI', 'Minus_DI', 'ADX']].tail(10))
 
 
-def identify_breakout(stock_data: pd.DataFrame) -> str:
+def identify_breakout(stock_data: pd.DataFrame) -> None:
     last_row = stock_data.iloc[-1]
     prev_row = stock_data.iloc[-2]
 
@@ -249,9 +249,9 @@ def identify_breakout(stock_data: pd.DataFrame) -> str:
         breakout_signals.append('Volume Spike')
 
     if breakout_signals:
-        return f"Potential Breakout Signals: {', '.join(breakout_signals)}"
+        format_print(f"Potential Breakout Signals: {', '.join(breakout_signals)}")
     else:
-        return "No breakout signals detected."
+        format_print("No breakout signals detected.")
 
 
 if __name__ == "__main__":
@@ -262,7 +262,7 @@ if __name__ == "__main__":
 
     get_stock_trend(stock_data=stock_data)
     summarize_support_resistance(stock_data=stock_data)
-    format_print(identify_breakout(stock_data=stock_data))
+    identify_breakout(stock_data=stock_data)
 
 
 
