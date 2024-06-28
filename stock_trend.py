@@ -36,6 +36,31 @@ Swing Low: The lowest price point over a specified recent period. It's a potenti
 
 """
 
+""" Break out signals
+
+Volume Analysis: 
+Breakouts are often accompanied by increased trading volume. A significant increase in volume can indicate strong interest and momentum.
+
+Price Patterns: 
+Certain price patterns, such as triangles, flags, pennants, and rectangles, can signal a potential breakout. When the price breaks out of these patterns, it can be an indicator of a strong move.
+
+Moving Averages: 
+Moving averages can help identify breakout opportunities. When a short-term moving average crosses above a long-term moving average (a bullish crossover), it can indicate a potential breakout.
+
+Bollinger Bands: 
+A stock price breaking above the upper Bollinger Band or below the lower Bollinger Band can signal a breakout. However, confirmation with other indicators is recommended.
+
+Relative Strength Index (RSI): 
+An RSI above 70 can indicate overbought conditions, while an RSI below 30 can indicate oversold conditions. A stock moving out of these extremes can signal a breakout.
+
+MACD (Moving Average Convergence Divergence): 
+A bullish MACD crossover (when the MACD line crosses above the signal line) can indicate a potential breakout.
+
+Support and Resistance Levels: 
+Breakouts often occur when a stock moves above a resistance level or below a support level. Identifying key support and resistance levels is crucial.
+
+"""
+
 # pip install pandas-ta
 import yfinance as yf
 import pandas as pd
@@ -75,6 +100,9 @@ def calculate_indicators(stock_data: pd.DataFrame) -> pd.DataFrame:
     stock_data['Plus_DI'] = adx['DMP_14']
     stock_data['Minus_DI'] = adx['DMN_14']
     stock_data['ADX'] = adx['ADX_14']
+
+    # Volume Spike
+    stock_data['Volume_Spike'] = stock_data['Volume'] > 2 * stock_data['Volume'].rolling(window=20).mean()
 
     return stock_data
 
@@ -154,27 +182,25 @@ def find_swing_levels(stock_data: pd.DataFrame, window: int = 5) -> pd.DataFrame
     stock_data['Swing_Low'] = stock_data['Low'].rolling(window=window, min_periods=1).min()
     return stock_data
 
-def summarize_support_resistance(stock_symbol, period, interval):
-    stock_data = get_stock_data(stock_symbol, period, interval)
+def summarize_support_resistance(stock_data: pd.DataFrame):
     if stock_data is not None:
         stock_data = calculate_pivot_points(stock_data)
         stock_data = find_swing_levels(stock_data, window=5)
 
         last_row = stock_data.iloc[-1]
-        print(f"Stock Symbol: {stock_symbol}")
-        print(f"Close: {last_row['Close']}")
-        print("Pivot Points:")
-        print(f"  Pivot: {last_row['Pivot']}")
-        print(f"  Resistance Levels: R1={last_row['R1']}, R2={last_row['R2']}, R3={last_row['R3']}")
-        print(f"  Support Levels: S1={last_row['S1']}, S2={last_row['S2']}, S3={last_row['S3']}")
-        print("Swing Levels:")
-        print(f"  Swing High: {last_row['Swing_High']}")
-        print(f"  Swing Low: {last_row['Swing_Low']}")
+        format_print(f"Stock Symbol: {stock_symbol}")
+        format_print(f"Close: {last_row['Close']}")
+        format_print("Pivot Points:")
+        format_print(f"  Pivot: {last_row['Pivot']}")
+        format_print(f"  Resistance Levels: R1={last_row['R1']}, R2={last_row['R2']}, R3={last_row['R3']}")
+        format_print(f"  Support Levels: S1={last_row['S1']}, S2={last_row['S2']}, S3={last_row['S3']}")
+        format_print("Swing Levels:")
+        format_print(f"  Swing High: {last_row['Swing_High']}")
+        format_print(f"  Swing Low: {last_row['Swing_Low']}")
 
 
-def get_stock_trend(stock_symbol, period, interval):
-    # Fetch historical market data
-    stock_data = get_stock_data(stock_symbol, period=period, interval=interval)
+
+def get_stock_trend(stock_data: pd.DataFrame):
 
     # Calculate indicators
     stock_data = calculate_indicators(stock_data)
@@ -183,10 +209,10 @@ def get_stock_trend(stock_symbol, period, interval):
     overall_trend, uptrend_count, downtrend_count = determine_trend(stock_data)
 
     # Print summary
-    print(f"Stock Symbol: {stock_symbol}")
-    print(f"Overall Trend: {overall_trend}")
-    print(f"Uptrend Indicators: {uptrend_count}")
-    print(f"Downtrend Indicators: {downtrend_count}")
+    format_print(f"Stock Symbol: {stock_symbol}")
+    format_print(f"Overall Trend: {overall_trend}")
+    format_print(f"Uptrend Indicators: {uptrend_count}")
+    format_print(f"Downtrend Indicators: {downtrend_count}")
 
     # Print calculated indicators for inspection
     #print(stock_data[['Close', 'SMA_20', 'SMA_50', 'EMA_20', 'EMA_50']].tail(10))
@@ -194,12 +220,49 @@ def get_stock_trend(stock_symbol, period, interval):
     #print(stock_data[['Close', 'ATR', 'OBV', 'Plus_DI', 'Minus_DI', 'ADX']].tail(10))
 
 
+def identify_breakout(stock_data: pd.DataFrame) -> str:
+    last_row = stock_data.iloc[-1]
+    prev_row = stock_data.iloc[-2]
+
+    breakout_signals = []
+
+    # Check Bollinger Bands breakout
+    if last_row['Close'] > last_row['UpperBand']:
+        breakout_signals.append('Bollinger Band Breakout')
+
+    # Check Moving Averages crossover
+    if prev_row['EMA_20'] <= prev_row['EMA_50'] and last_row['EMA_20'] > last_row['EMA_50']:
+        breakout_signals.append('EMA Crossover')
+
+    # Check RSI breakout from overbought/oversold
+    if prev_row['RSI'] <= 30 and last_row['RSI'] > 30:
+        breakout_signals.append('RSI Breakout from Oversold')
+    elif prev_row['RSI'] >= 70 and last_row['RSI'] < 70:
+        breakout_signals.append('RSI Breakout from Overbought')
+
+    # Check MACD crossover
+    if prev_row['MACD'] <= prev_row['Signal_Line'] and last_row['MACD'] > last_row['Signal_Line']:
+        breakout_signals.append('MACD Crossover')
+
+    # Check Volume Spike
+    if last_row['Volume_Spike']:
+        breakout_signals.append('Volume Spike')
+
+    if breakout_signals:
+        return f"Potential Breakout Signals: {', '.join(breakout_signals)}"
+    else:
+        return "No breakout signals detected."
+
 
 if __name__ == "__main__":
     stock_symbol = input("Enter the stock symbol (e.g., TITAGARH.NS): ")
-    PERIOD = "5d" # "1d", "1mo", "3mo", "6mo", "1y"
-    INTERVAL = "15m" # "1m", "5m", "15m", "30m", "1h", "1d"
-    get_stock_trend(stock_symbol.upper(), period=PERIOD, interval=INTERVAL)
-    summarize_support_resistance(stock_symbol, period=PERIOD, interval=INTERVAL)
+    PERIOD = "1d" # "1d", "1mo", "3mo", "6mo", "1y"
+    INTERVAL = "5m" # "1m", "5m", "15m", "30m", "1h", "1d"
+    stock_data = get_stock_data(stock_symbol.upper(), period=PERIOD, interval=INTERVAL)
+
+    get_stock_trend(stock_data=stock_data)
+    summarize_support_resistance(stock_data=stock_data)
+    format_print(identify_breakout(stock_data=stock_data))
+
 
 
