@@ -61,10 +61,22 @@ Breakouts often occur when a stock moves above a resistance level or below a sup
 
 """
 
+"""
+Triangles: 
+ Ascending, descending, or symmetrical triangles.
+Flags and Pennants: 
+ Small consolidations that form after a sharp price movement.
+Rectangles: 
+Consolidation patterns where the price bounces between two parallel levels.
+"""
+
 # pip install pandas-ta
 import yfinance as yf
 import pandas as pd
 import pandas_ta as ta
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.signal import argrelextrema
 
 def calculate_indicators(stock_data: pd.DataFrame) -> pd.DataFrame:
     # Simple Moving Average (SMA)
@@ -256,15 +268,90 @@ def identify_breakout(stock_data: pd.DataFrame) -> None:
         format_print("No breakout signals detected.")
 
 
+
+def plot_stock_data(stock_data:pd.DataFrame, stock_symbol, pattern=None):
+    plt.figure(figsize=(12, 6))
+    plt.plot(stock_data['Close'], label='Close Price')
+    if pattern:
+        plt.title(f'{stock_symbol} - {pattern}')
+    else:
+        plt.title(stock_symbol)
+    plt.xlabel('Date')
+    plt.ylabel('Price')
+    plt.legend()
+    plt.show()
+
+def find_extrema(stock_data:pd.DataFrame, order:int =5) -> pd.DataFrame:
+    stock_data['min'] = stock_data.iloc[argrelextrema(stock_data['Close'].values, np.less_equal, order=order)[0]]['Close']
+    stock_data['max'] = stock_data.iloc[argrelextrema(stock_data['Close'].values, np.greater_equal, order=order)[0]]['Close']
+    return stock_data
+
+def detect_triangle(stock_data):
+    min_points = stock_data.dropna(subset=['min'])
+    max_points = stock_data.dropna(subset=['max'])
+
+    if len(min_points) < 2 or len(max_points) < 2:
+        return None
+
+    # Calculate the time differences in days
+    min_time_diff = (min_points.index[-1] - min_points.index[0]).days
+    max_time_diff = (max_points.index[-1] - max_points.index[0]).days
+
+    if min_time_diff == 0 or max_time_diff == 0:
+        return None
+
+    # Calculate the slope for min and max points
+    min_slope = (min_points['min'].iloc[-1] - min_points['min'].iloc[0]) / min_time_diff
+    max_slope = (max_points['max'].iloc[-1] - max_points['max'].iloc[0]) / max_time_diff
+
+    if min_slope > 0 and max_slope < 0:
+        return "Symmetrical Triangle"
+    elif min_slope > 0 and max_slope > 0:
+        return "Ascending Triangle"
+    elif min_slope < 0 and max_slope < 0:
+        return "Descending Triangle"
+    else:
+        return None
+
+def detect_rectangle(stock_data: pd.DataFrame):
+    min_points = stock_data.dropna(subset=['min'])
+    max_points = stock_data.dropna(subset=['max'])
+
+    if len(min_points) < 2 or len(max_points) < 2:
+        return None
+
+    if abs(min_points['min'].diff().dropna().mean()) < stock_data['Close'].std() and abs(max_points['max'].diff().dropna().mean()) < stock_data['Close'].std():
+        return "Rectangle"
+    else:
+        return None
+
+def find_price_patterns(stock_data: pd.DataFrame):
+    stock_data = find_extrema(stock_data)
+    
+    triangle_pattern = detect_triangle(stock_data)
+    if triangle_pattern:
+        #plot_stock_data(stock_data, stock_symbol, pattern=triangle_pattern)
+        print(f"Detected pattern: {triangle_pattern}")
+    
+    rectangle_pattern = detect_rectangle(stock_data)
+    if rectangle_pattern:
+        #plot_stock_data(stock_data, stock_symbol, pattern=rectangle_pattern)
+        print(f"Detected pattern: {rectangle_pattern}")
+
+    if not triangle_pattern and not rectangle_pattern:
+        #plot_stock_data(stock_data, stock_symbol)
+        print("No significant pattern detected.")
+
 if __name__ == "__main__":
     stock_symbol = input("Enter the stock symbol (e.g., TITAGARH.NS): ")
-    PERIOD = "1d" # "1d", "1mo", "3mo", "6mo", "1y"
+    PERIOD = "5d" # "1d", "1mo", "3mo", "6mo", "1y"
     INTERVAL = "5m" # "1m", "5m", "15m", "30m", "1h", "1d"
     stock_data = get_stock_data(stock_symbol.upper(), period=PERIOD, interval=INTERVAL)
 
     get_stock_trend(stock_data=stock_data)
     summarize_support_resistance(stock_data=stock_data)
     identify_breakout(stock_data=stock_data)
+    find_price_patterns(stock_data=stock_data)
 
 
 
