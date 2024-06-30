@@ -1,0 +1,103 @@
+Sunday 30 Jun 2024
+==============================================================
+Enter the stock symbol (e.g., TITAGARH.NS): sbin.ns
+Fetching stock data for the period: 1y
+______________________________________
+Choosing interval: 5d
+_____________________
+Positive Trend : SMA TREND
+__________________________
+Positive Trend : EMA TREND
+__________________________
+Positive Trend : BOLLINGER BANDS TREND
+______________________________________
+Positive Trend : RSI TREND
+__________________________
+Positive Trend : MACD TREND
+___________________________
+Positive Trend : OBV TREND
+__________________________
+Positive Trend : ADX TREND
+__________________________
+Stock Symbol: sbin.ns
+_____________________
+Overall Trend: Uptrend
+______________________
+Uptrend Indicators: 7
+_____________________
+Downtrend Indicators: 0
+_______________________
+Stock Symbol: sbin.ns
+_____________________
+Close: 848.9500122070312
+________________________
+Pivot Points:
+_____________
+  Pivot: 850.4000040690104
+__________________________
+  Resistance Levels: R1=862.5500081380208, R2=876.1500040690104, R3=888.3000081380208
+_____________________________________________________________________________________
+  Support Levels: S1=836.8000081380208, S2=824.6500040690104, S3=811.0500081380208
+__________________________________________________________________________________
+Swing Levels:
+_____________
+  Swing High: 864.0
+___________________
+  Swing Low: 810.5
+__________________
+Potential Breakout Signals: Volume Spike
+________________________________________
+Detected pattern: Ascending Triangle
+Detected pattern: Rectangle
+***********************************************
+Enter the stock symbol (e.g., TITAGARH.NS): sbin.ns
+Fetching stock data for the period: 1y
+______________________________________
+Choosing interval: 1d
+_____________________
+Positive Trend : SMA TREND
+__________________________
+Positive Trend : EMA TREND
+__________________________
+Positive Trend : BOLLINGER BANDS TREND
+______________________________________
+Positive Trend : RSI TREND
+__________________________
+Nagative Trend : MACD TREND
+___________________________
+Positive Trend : OBV TREND
+__________________________
+Nagative Trend : ADX TREND
+__________________________
+Stock Symbol: sbin.ns
+_____________________
+Overall Trend: Uptrend
+______________________
+Uptrend Indicators: 5
+_____________________
+Downtrend Indicators: 2
+_______________________
+Stock Symbol: sbin.ns
+_____________________
+Close: 848.9500122070312
+________________________
+Pivot Points:
+_____________
+  Pivot: 852.3166707356771
+__________________________
+  Resistance Levels: R1=860.6333414713542, R2=872.3166707356771, R3=880.6333414713542
+_____________________________________________________________________________________
+  Support Levels: S1=840.6333414713542, S2=832.3166707356771, S3=820.6333414713542
+__________________________________________________________________________________
+Swing Levels:
+_____________
+  Swing High: 864.0
+___________________
+  Swing Low: 821.0499877929688
+______________________________
+No breakout signals detected.
+_____________________________
+Detected pattern: Ascending Triangle
+Detected pattern: Rectangle
+
+
