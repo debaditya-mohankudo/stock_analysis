@@ -78,6 +78,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal import argrelextrema
 
+from typing import Optional
+
 def calculate_indicators(stock_data: pd.DataFrame) -> pd.DataFrame:
     # Simple Moving Average (SMA)
     stock_data['SMA_20'] = ta.sma(stock_data['Close'], length=20)
@@ -171,7 +173,7 @@ def determine_trend(stock_data: pd.DataFrame):
 
 
 
-def get_stock_data(stock_symbol, period, interval) -> pd.DataFrame:
+def get_stock_data(stock_symbol, period, interval) -> Optional[pd.DataFrame]:
     stock = yf.Ticker(stock_symbol)
     stock_data = stock.history(period=period, interval=interval)
     if stock_data.empty:
@@ -270,6 +272,7 @@ def identify_breakout(stock_data: pd.DataFrame) -> None:
 
 
 def plot_stock_data(stock_data:pd.DataFrame, stock_symbol, pattern=None):
+    import time
     plt.figure(figsize=(12, 6))
     plt.plot(stock_data['Close'], label='Close Price')
     if pattern:
@@ -279,7 +282,8 @@ def plot_stock_data(stock_data:pd.DataFrame, stock_symbol, pattern=None):
     plt.xlabel('Date')
     plt.ylabel('Price')
     plt.legend()
-    plt.show()
+    # Save the plot as an image
+    plt.savefig(f"./plots/{time.ctime()}-{stock_symbol}-{pattern}.png")
 
 def find_extrema(stock_data:pd.DataFrame, order:int =5) -> pd.DataFrame:
     stock_data['min'] = stock_data.iloc[argrelextrema(stock_data['Close'].values, np.less_equal, order=order)[0]]['Close']
@@ -330,12 +334,13 @@ def find_price_patterns(stock_data: pd.DataFrame):
     
     triangle_pattern = detect_triangle(stock_data)
     if triangle_pattern:
-        #plot_stock_data(stock_data, stock_symbol, pattern=triangle_pattern)
+        
+        plot_stock_data(stock_data, stock_symbol, pattern=triangle_pattern)
         print(f"Detected pattern: {triangle_pattern}")
     
     rectangle_pattern = detect_rectangle(stock_data)
     if rectangle_pattern:
-        #plot_stock_data(stock_data, stock_symbol, pattern=rectangle_pattern)
+        plot_stock_data(stock_data, stock_symbol, pattern=rectangle_pattern)
         print(f"Detected pattern: {rectangle_pattern}")
 
     if not triangle_pattern and not rectangle_pattern:
@@ -344,9 +349,10 @@ def find_price_patterns(stock_data: pd.DataFrame):
 
 if __name__ == "__main__":
     stock_symbol = input("Enter the stock symbol (e.g., TITAGARH.NS): ")
-    PERIOD = "5d" # "1d", "1mo", "3mo", "6mo", "1y"
-    INTERVAL = "5m" # "1m", "5m", "15m", "30m", "1h", "1d"
-    stock_data = get_stock_data(stock_symbol.upper(), period=PERIOD, interval=INTERVAL)
+
+    period = "1y" # "1d", "1mo", "3mo", "6mo", "1y", "5y"
+    interval = "5d" # [1m, 2m, 5m, 15m, 30m, 60m, 90m, 1h, 1d, 5d, 1wk, 1mo, 3mo]
+    stock_data = get_stock_data(stock_symbol.upper(), period=period, interval=interval)
 
     get_stock_trend(stock_data=stock_data)
     summarize_support_resistance(stock_data=stock_data)
