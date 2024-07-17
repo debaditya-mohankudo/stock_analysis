@@ -83,3 +83,5 @@ plt.xticks(rotation=90)  # Rotate company names for better visibility
 plt.tight_layout()  # Adjust layout to make room for label
 file_path = os.path.join(data_directory, "30_most_volatile_stocks.png")
 plt.savefig(file_path)
+
+volatility_data.sort_values(by='Annualized Volatility').to_html(f"{data_directory}volatility_data.html")
