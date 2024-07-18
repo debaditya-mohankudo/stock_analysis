@@ -1,6 +1,7 @@
 
 
 import asyncio
+import json
 import yfinance as yf
 
 import os
@@ -28,12 +29,17 @@ async def check_stock_price(ticker, threshold):
 
 async def main():
     # Dictionary of tickers and their price thresholds
-    stock_thresholds = {
-        'JWL.NS': 662,   # Apple with a threshold of $150
-        'TITAGARH.NS': 1702,   # Microsoft with a threshold of $280
-    }
+    
+    '''stock_thresholds = {
+        'RVNL.NS': 615,   # Apple with a threshold of $150
+        'TITAGARH.NS': 1667,   # Microsoft with a threshold of $280
+        'TATAPOWER.NS': 446
+    }'''
+
 
     while True:
+        with open('./stock_price_thresholds.json', 'r') as file:
+            stock_thresholds = json.load(file)
         tasks = [check_stock_price(ticker, threshold) for ticker, threshold in stock_thresholds.items()]
         await asyncio.gather(*tasks)
         print("Sleep some time")
