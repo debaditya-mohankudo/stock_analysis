@@ -114,7 +114,7 @@ volatility_data_30_most = volatility_data.sort_values(by='VIS').tail(30)
 
 # Plotting
 plt.figure(figsize=(12, 8))  # Adjusted for better visibility
-plt.bar(volatility_data_30_most['Company Name'], volatility_data_30_least['VIS'], color='skyblue')
+plt.bar(volatility_data_30_most['Company Name'], volatility_data_30_most['VIS'], color='skyblue')
 plt.xlabel('Company Name')
 plt.ylabel('VIS')
 plt.title('30 Most Volatile Companies (VIS)')
