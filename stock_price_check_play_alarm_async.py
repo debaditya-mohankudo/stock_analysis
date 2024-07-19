@@ -13,7 +13,7 @@ def play_music(file_path):
 # Function to fetch stock price synchronously
 def get_stock_price(ticker):
     stock = yf.Ticker(ticker)
-    price = stock.history(period="1d")['Close'].iloc[-1]  # Get the last closing price
+    price = stock.history(period="1d", interval="15m")['Close'].iloc[-1]  # Get the last closing price
     return price
 
 # Asynchronous wrapper to check the stock price and play an alarm if a threshold is crossed
