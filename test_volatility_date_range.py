@@ -1,3 +1,15 @@
+"""
+To create a single measurement that encapsulates both the direction and the magnitude of the movements in a dataset, we can combine the metrics into a composite score. One way to do this is by defining a Volatility Impact Score that takes into account:
+
+Proportion of Upward and Downward Movements: To account for the balance between up and down movements.
+Mean Positive and Negative Returns: To account for the magnitude of these movements.
+Volatility: To account for the overall variability.
+Here’s how you can construct such a composite score:
+
+
+VIS=α⋅(Proportion Up−Proportion Down)+β⋅(Mean Positive Return+∣Mean Negative Return∣)+γ⋅Volatility
+"""
+
 import pandas as pd
 import yfinance as yf
 import matplotlib.pyplot as plt
