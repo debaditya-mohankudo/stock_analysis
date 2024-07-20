@@ -7,7 +7,7 @@ Volatility: To account for the overall variability.
 Here’s how you can construct such a composite score:
 
 
-VIS=α⋅(Proportion Up−Proportion Down)+β⋅(Mean Positive Return+∣Mean Negative Return∣)+γ⋅Volatility
+VIS=(α⋅upward_volatitlity+β⋅downward_volatility+γ⋅Volatility) / (α + β + γ)
 """
 
 import pandas as pd
