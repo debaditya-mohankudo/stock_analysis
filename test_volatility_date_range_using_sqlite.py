@@ -13,6 +13,7 @@ VIS=(α⋅upward_volatitlity+β⋅downward_volatility+γ⋅Volatility) / (α + �
 import pandas as pd
 import yfinance as yf
 from sqlalchemy import create_engine, inspect
+import os
 
 # Create an SQLite database engine
 engine = create_engine('sqlite:///stock_data.db')
@@ -70,7 +71,8 @@ def calculate_trend(metrics):
 
 # Suppress messages from yfinance
 #logging.getLogger('yfinance').setLevel(logging.ERROR)
-csv_file = "NSE_large_midcap_250"
+# csv_file = "NSE_large_midcap_250"
+csv_file = "NSE_small_cap_list"
 # Load data from CSV
 data = pd.read_csv(f"{csv_file}.csv")
 
@@ -111,4 +113,7 @@ for index, row in data.iterrows():
 
 
 data_directory = "./stock_data/"
+if not os.path.isdir(data_directory):
+    os.mkdir(data_directory)
+
 volatility_data.sort_values(by='VIS').to_html(f"{data_directory}{csv_file}volatility_data.html")
