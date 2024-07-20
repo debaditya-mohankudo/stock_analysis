@@ -23,50 +23,47 @@ import pandas as pd
 def calculate_metrics(data):
     daily_returns = data.pct_change().dropna()
     
-    # Mean Absolute Return
-    mean_abs_return = daily_returns.abs().mean()
     
-    # Mean Positive and Negative Returns
-    mean_positive_return = daily_returns[daily_returns > 0].mean()
-    mean_negative_return = daily_returns[daily_returns < 0].mean()
+
     
     # Proportion of Up and Down Movements
     up_movements = (daily_returns > 0).sum()
+    upward_volatility = up_movements.std()
     down_movements = (daily_returns < 0).sum()
-    total_movements = up_movements + down_movements
-    proportion_up = up_movements / total_movements
-    proportion_down = down_movements / total_movements
+    downward_volatility = down_movements.std()
     
     # Volatility
     volatility = daily_returns.std()
     
     return {
-        'mean_abs_return': mean_abs_return,
-        'mean_positive_return': mean_positive_return,
-        'mean_negative_return': mean_negative_return,
-        'proportion_up': proportion_up,
-        'proportion_down': proportion_down,
+        'upward_volatility': upward_volatility,
+        'downward_volatility': downward_volatility,
         'volatility': volatility
     }
 
 # Function to calculate Volatility Impact Score (VIS)
-def calculate_vis(metrics, alpha=1, beta=1, gamma=1):
-    proportion_diff = metrics['proportion_up'] - metrics['proportion_down']
-    mean_return_sum = metrics['mean_positive_return'] + abs(metrics['mean_negative_return'])
+def calculate_vis(metrics, alpha=2, beta=2, gamma=1):
     volatility = metrics['volatility']
-    
-    vis = alpha * proportion_diff + beta * mean_return_sum + gamma * volatility
+    upward_volatility = metrics['upward_volatility']
+    downward_volatility = metrics['downward_volatility']
+    vis = (alpha * volatility + beta * upward_volatility + gamma * downward_volatility) / (alpha + beta +gamma)
+
     return vis
 
 # Suppress messages from yfinance
 #logging.getLogger('yfinance').setLevel(logging.ERROR)
-
+#csv_file = "NSE_large_midcap_250"
+csv_file = "NSE_small_cap_list"
 # Load data from CSV
-data = pd.read_csv('./NSE_large_midcap_250.csv')
+data = pd.read_csv(f"{csv_file}.csv")
 
 ## Define the date range
-start_date = '2024-06-01'
-end_date = '2024-06-10'
+start_date = '2024-06-02'
+end_date = '2024-06-07'
+
+## OR define period and interval ( dynamic data, dont store in csv)
+#period = "1d"
+#interval = "1m"
 
 # Create a DataFrame to store volatilities
 volatility_data = pd.DataFrame(columns=['Company Name', 'VIS'])
@@ -80,6 +77,7 @@ if not os.path.exists(data_directory):
 for index, row in data.iterrows():
     symbol = row['Symbol'] + ".NS"  # Appending .NS for NSE
     company_name = row['Company Name']
+    
     file_path = f"{data_directory}{symbol}_{start_date}_{end_date}.csv"
 
     # Check if data already exists
@@ -89,11 +87,13 @@ for index, row in data.iterrows():
     else:
         # Download stock data
         stock_data = yf.download(symbol, start=start_date, end=end_date, progress=False)
+        #stock_data = yf.download(symbol, period="1d", interval="1m", progress=False)
         # Save to CSV
         stock_data.to_csv(file_path)
 
     # Calculate metrics
     metrics = calculate_metrics(stock_data['Adj Close'])
+
 
     # Calculate VIS 
     vis = calculate_vis(metrics)
@@ -135,4 +135,4 @@ plt.tight_layout()  # Adjust layout to make room for label
 file_path = os.path.join(data_directory, "30_most_volatile_stocks.png")
 plt.savefig(file_path)
 
-volatility_data.sort_values(by='VIS').to_html(f"{data_directory}volatility_data.html")
+volatility_data.sort_values(by='VIS').to_html(f"{data_directory}{csv_file}volatility_data.html")
