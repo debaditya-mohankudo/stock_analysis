@@ -27,18 +27,21 @@ def calculate_metrics(data):
 
     
     # Proportion of Up and Down Movements
-    up_movements = (daily_returns > 0).sum()
-    upward_volatility = up_movements.std()
-    down_movements = (daily_returns < 0).sum()
-    downward_volatility = down_movements.std()
+    upward_volatility =  (daily_returns > 0).std()
+
+    downward_volatility = (daily_returns < 0).std()
     
     # Volatility
     volatility = daily_returns.std()
+
+    # Trend
+    trend = daily_returns.sum()
     
     return {
         'upward_volatility': upward_volatility,
         'downward_volatility': downward_volatility,
-        'volatility': volatility
+        'volatility': volatility,
+        'trend': trend
     }
 
 # Function to calculate Volatility Impact Score (VIS)
@@ -50,23 +53,33 @@ def calculate_vis(metrics, alpha=2, beta=2, gamma=1):
 
     return vis
 
+def calculate_trend(metrics):
+    if metrics['trend'] == 0:
+        return 'flat'
+    elif metrics['trend'] > 0:
+        return 'up'
+    else:
+        return 'down'
+    
+
+
 # Suppress messages from yfinance
 #logging.getLogger('yfinance').setLevel(logging.ERROR)
-#csv_file = "NSE_large_midcap_250"
-csv_file = "NSE_small_cap_list"
+csv_file = "NSE_large_midcap_250"
+#csv_file = "NSE_small_cap_list"
 # Load data from CSV
 data = pd.read_csv(f"{csv_file}.csv")
 
 ## Define the date range
-start_date = '2024-06-02'
-end_date = '2024-06-07'
+start_date = '2024-06-01'
+end_date = '2024-07-20'
 
 ## OR define period and interval ( dynamic data, dont store in csv)
 #period = "1d"
 #interval = "1m"
 
 # Create a DataFrame to store volatilities
-volatility_data = pd.DataFrame(columns=['Company Name', 'VIS'])
+volatility_data = pd.DataFrame(columns=['Company Name', 'VIS', 'Trend'])
 
 # Directory to save CSV files of stock data
 data_directory = './stock_data/'
@@ -98,10 +111,14 @@ for index, row in data.iterrows():
     # Calculate VIS 
     vis = calculate_vis(metrics)
 
+    # Calculate Trend
+    trend = calculate_trend(metrics)
+
     # Append to the DataFrame using concat
     new_row = pd.DataFrame({
         'Company Name': [company_name],
-        'VIS': [vis]
+        'VIS': [vis],
+        'Trend': [trend]
     })
     volatility_data = pd.concat([volatility_data, new_row], ignore_index=True)
 

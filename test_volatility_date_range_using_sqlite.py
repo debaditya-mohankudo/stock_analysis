@@ -72,9 +72,18 @@ def calculate_trend(metrics):
 # Suppress messages from yfinance
 #logging.getLogger('yfinance').setLevel(logging.ERROR)
 # csv_file = "NSE_large_midcap_250"
-csv_file = "NSE_small_cap_list"
-# Load data from CSV
-data = pd.read_csv(f"{csv_file}.csv")
+csv_files = ["NSE_small_cap_list", "NSE_large_midcap_250"]
+
+# Initialize an empty list to store the DataFrames
+dataframes = []
+
+# Loop through the list of CSV files and read each one into a DataFrame
+for file in csv_files:
+    df = pd.read_csv(f"{file}.csv")
+    dataframes.append(df)
+
+# Concatenate all the DataFrames in the list into a single DataFrame
+combined_df = pd.concat(dataframes, ignore_index=True)
 
 # Define the date range
 start_date = '2024-06-01'
@@ -84,7 +93,7 @@ end_date = '2024-07-20'
 volatility_data = pd.DataFrame(columns=['Company Name', 'VIS', 'Trend'])
 
 # Loop through each row in the DataFrame
-for index, row in data.iterrows():
+for index, row in combined_df.iterrows():
     symbol = row['Symbol'] + ".NS"  # Appending .NS for NSE
     company_name = row['Company Name']
 
@@ -116,4 +125,4 @@ data_directory = "./stock_data/"
 if not os.path.isdir(data_directory):
     os.mkdir(data_directory)
 
-volatility_data.sort_values(by='VIS').to_html(f"{data_directory}{csv_file}volatility_data.html")
+volatility_data.sort_values(by='VIS').to_html(f"{data_directory}{"-".join(csv_files)}volatility_data.html")
