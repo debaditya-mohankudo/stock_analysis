@@ -1,3 +1,9 @@
+''' 
+ouputs a html table with the max changes sorted by ASC
+If you want to run on the same day again , you need to delete the sqlite database,
+stock_data.db
+'''
+
 import yfinance as yf
 import pandas as pd
 from sqlalchemy import create_engine, inspect
