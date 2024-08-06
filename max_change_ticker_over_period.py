@@ -22,7 +22,7 @@ if 'Symbol' not in data.columns:
     raise ValueError("CSV files must contain 'Symbol' column")
 
 # Define the period for fetching historical data
-period = "6mo"
+period = "5d"
 
 # Get today's date
 today_date = datetime.today().strftime('%Y-%m-%d')
